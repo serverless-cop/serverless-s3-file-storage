@@ -3,25 +3,28 @@ import {
     APIGatewayProxyResult,
     APIGatewayProxyEvent
 } from 'aws-lambda';
+import {extractFile, FileData} from "../lib/utils";
 import {Env} from "../lib/env";
 import {TodoService} from "../service/TodoService";
-import {getPathParameter, getQueryString} from "../lib/utils";
 
-const table = Env.get('TODO_TABLE')
+const bucket = Env.get('TODO_BUCKET')
 const todoService = new TodoService({
-    table: table
+    bucketName: bucket
 })
 
 export async function handler(event: APIGatewayProxyEvent, context: Context):
     Promise<APIGatewayProxyResult> {
-
     const result: APIGatewayProxyResult = {
         statusCode: 200,
-        body: ''
+        body: 'Empty!'
     }
-
-    const todo = await todoService.list()
-
-    result.body = JSON.stringify(todo)
+    try {
+        const fileData = extractFile(event) as FileData
+        const todo = await todoService.upload(fileData)
+        result.body = JSON.stringify(todo)
+    } catch (error) {
+        result.statusCode = 500
+        result.body = error.message
+    }
     return result
 }

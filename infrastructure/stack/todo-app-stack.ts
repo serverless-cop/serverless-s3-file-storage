@@ -4,7 +4,6 @@ import {Stack} from "aws-cdk-lib";
 import {TodoApis} from "../lib/construct/todo-apis";
 import {TodoAppStatefulStack} from "./todo-app-stateful-stack";
 
-
 export interface TodoAppProps{
   todoAppStatefulStack: TodoAppStatefulStack
 }
@@ -16,9 +15,8 @@ export class TodoAppStack extends Stack {
   constructor(scope: Construct, id: string, todoAppProps: TodoAppProps,  props?: cdk.StackProps) {
     super(scope, id, props);
     this.todoApis = new TodoApis(this,id, {
-      todoTable: todoAppProps.todoAppStatefulStack.todoTable
+      todoBucket: todoAppProps.todoAppStatefulStack.todosPhotoBucket
     })
   }
-
 
 }

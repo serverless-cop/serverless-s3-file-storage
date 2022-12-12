@@ -1,78 +1,37 @@
-import { DocumentClient, ScanInput } from 'aws-sdk/clients/dynamodb'
 import { v4 as uuidv4 } from 'uuid'
-import {ExternalError} from "../lib/error";
-import {TodoCreateParams, TodoDeleteParams, TodoEditParams, TodoEntity, TodoGetParams} from "./types";
+import { TodoEntity} from "./types";
+import {S3} from "aws-sdk";
+const AWS = require('aws-sdk');
+
 
 interface TodoServiceProps{
-    table: string
+    bucketName: string
 }
 
 export class TodoService {
 
     private props: TodoServiceProps
-    private documentClient = new DocumentClient()
+    private s3: S3
+    private bucketName: string
 
     public constructor(props: TodoServiceProps){
         this.props = props
+        this.s3 = new AWS.S3();
+        this.bucketName = props.bucketName
     }
 
-    async list(): Promise<TodoEntity[]> {
-
-        const response = await this.documentClient
-            .scan({
-                TableName: this.props.table,
-            }).promise()
-        if (response.Items === undefined) {
-            return [] as TodoEntity[]
-        }
-        return response.Items as TodoEntity[]
-    }
-
-    async get(params: TodoGetParams): Promise<TodoEntity> {
-        const id = params.id
-        const response = await this.documentClient
-            .get({
-                TableName: this.props.table,
-                Key: {
-                    id: id,
-                },
-            }).promise()
-        if (response.Item === undefined) {
-            return {} as TodoEntity
-        }
-        return response.Item as TodoEntity
-    }
-
-    async create(params: TodoCreateParams): Promise<TodoEntity> {
-        const todo: TodoEntity = {
+    async upload(params: TodoEntity): Promise<TodoEntity> {
+        const entity = {
             id: uuidv4(),
             ...params,
         }
-        const response = await this.documentClient
-            .put({
-                TableName: this.props.table,
-                Item: todo,
-            }).promise()
-        return todo
-    }
-
-    async edit(params: TodoEditParams): Promise<TodoEntity> {
-        const response = await this.documentClient
-            .put({
-                TableName: this.props.table,
-                Item: params,
-            }).promise()
-        return params
-    }
-
-    async delete(params: TodoDeleteParams) {
-        const response = await this.documentClient
-            .delete({
-                TableName: this.props.table,
-                Key: {
-                    id: params.id
-                },
-            }).promise()
+        await this.s3.putObject({
+            Bucket: this.bucketName,
+            Key: params.fileName,
+            ACL: 'public-read',
+            Body: params.data
+        }).promise()
+        return entity
     }
 
 }

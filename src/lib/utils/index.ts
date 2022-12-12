@@ -1,5 +1,11 @@
 import {APIGatewayProxyEvent, APIGatewayProxyResult} from "aws-lambda";
 import {ExternalError} from "../error";
+const parseMultipart = require('parse-multipart');
+
+export interface FileData {
+    data: any
+    fileName: any
+}
 
 export function generateRandomId(): string {
     return Math.random().toString(36).slice(2);
@@ -46,5 +52,20 @@ export function isIncludedInGroup(group: string, event: APIGatewayProxyEvent) {
         return (groups as string).includes(group)
     } else {
         return false
+    }
+}
+
+export function extractFile(event: APIGatewayProxyEvent): FileData | {} {
+    try {
+        if(!event.body) return {}
+        const boundary = parseMultipart.getBoundary(event.headers['content-type'])
+        const parts = parseMultipart.Parse(Buffer.from(event.body, 'base64'), boundary);
+        const [{ filename, data }] = parts
+        return {
+            filename,
+            data
+        }
+    } catch (e) {
+        throw new ExternalError(400, e.toString())
     }
 }

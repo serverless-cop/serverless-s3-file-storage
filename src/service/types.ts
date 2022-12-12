@@ -1,13 +1,6 @@
-export interface TodoGetParams{
-    id: string
-}
+
 export interface TodoEntity{
-    id: string
-    description: string
-}
-export interface TodoCreateParams{
-    description: string
+    data: any
+    fileName: string
 }
 
-export type TodoEditParams = TodoEntity
-export type TodoDeleteParams = TodoGetParams
