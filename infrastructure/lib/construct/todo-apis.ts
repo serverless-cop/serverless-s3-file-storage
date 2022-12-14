@@ -17,7 +17,7 @@ export class TodoApis extends GenericApi {
         super(scope, id)
         this.props = props
         this.addApis();
-        props.todoBucket.grantPut(this.uploadApi)
+        props.todoBucket.grantReadWrite(this.uploadApi)
     }
 
     private addApis(){

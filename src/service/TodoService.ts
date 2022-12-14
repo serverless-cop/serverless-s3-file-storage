@@ -20,18 +20,12 @@ export class TodoService {
         this.bucketName = props.bucketName
     }
 
-    async upload(params: TodoEntity): Promise<TodoEntity> {
-        const entity = {
-            id: uuidv4(),
-            ...params,
-        }
+    async upload(params: any){
         await this.s3.putObject({
             Bucket: this.bucketName,
-            Key: params.fileName,
-            ACL: 'public-read',
-            Body: params.data
+            Key: uuidv4() + params.data.filename,
+            Body: params.data.content.data
         }).promise()
-        return entity
     }
 
 }

@@ -1,6 +1,6 @@
 import {APIGatewayProxyEvent, APIGatewayProxyResult} from "aws-lambda";
-import {ExternalError} from "../error";
-const parseMultipart = require('parse-multipart');
+import {ExternalError, InternalError} from "../error";
+const multipart = require('aws-lambda-multipart-parser');
 
 export interface FileData {
     data: any
@@ -55,17 +55,11 @@ export function isIncludedInGroup(group: string, event: APIGatewayProxyEvent) {
     }
 }
 
-export function extractFile(event: APIGatewayProxyEvent): FileData | {} {
-    try {
-        if(!event.body) return {}
-        const boundary = parseMultipart.getBoundary(event.headers['content-type'])
-        const parts = parseMultipart.Parse(Buffer.from(event.body, 'base64'), boundary);
-        const [{ filename, data }] = parts
-        return {
-            filename,
-            data
-        }
-    } catch (e) {
-        throw new ExternalError(400, e.toString())
+export function parseFile (event: APIGatewayProxyEvent): any {
+    if (event.isBase64Encoded) {
+        event.body = Buffer.from(event.body as string, 'base64')
+            .toString('binary')
     }
+    const form = multipart.parse(event, true)
+    return form
 }
