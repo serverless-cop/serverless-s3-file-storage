@@ -11,23 +11,26 @@ export interface TodoApiProps {
 export class TodoApis extends GenericApi {
     private props: TodoApiProps
     private uploadApi: NodejsFunction
-
+    private presignedUrlApi: NodejsFunction
 
     public constructor(scope: Construct, id: string, props: TodoApiProps) {
         super(scope, id)
         this.props = props
         this.addApis();
         props.todoBucket.grantReadWrite(this.uploadApi)
+        props.todoBucket.grantReadWrite(this.presignedUrlApi)
     }
 
     private addApis(){
         const todosApiResource = this.api.root.addResource('todos')
+        const uploadApiResource = todosApiResource.addResource('upload')
+        const presignedUrlApiResource = todosApiResource.addResource('presignedUrl')
 
         this.uploadApi = this.addMethod({
             functionName: 'todo-post-upload',
             handlerName: 'todo-upload-handler.ts',
             verb: 'POST',
-            resource: todosApiResource,
+            resource: uploadApiResource,
             environment: {
                 TODO_BUCKET: this.props.todoBucket.bucketName
             },
@@ -35,6 +38,16 @@ export class TodoApis extends GenericApi {
             // bodySchema: uploadTodoSchema
         })
 
+        this.presignedUrlApi = this.addMethod({
+            functionName: 'todo-post-presigned-url',
+            handlerName: 'todo-put-presigned-handler.ts',
+            verb: 'POST',
+            resource: presignedUrlApiResource,
+            environment: {
+                TODO_BUCKET: this.props.todoBucket.bucketName
+            },
+            validateRequestBody: false,
+            // bodySchema: uploadTodoSchema
+        })
     }
-
 }

@@ -1,11 +1,17 @@
 import { v4 as uuidv4 } from 'uuid'
-import { TodoEntity} from "./types";
 import {S3} from "aws-sdk";
-const AWS = require('aws-sdk');
+import s3Client from 'aws-sdk/clients/s3'
 
 
 interface TodoServiceProps{
     bucketName: string
+}
+
+export interface FileServiceProps{
+    bucketName: string
+    fileName: string
+    contentType: string
+    expireSeconds: number
 }
 
 export class TodoService {
@@ -16,7 +22,7 @@ export class TodoService {
 
     public constructor(props: TodoServiceProps){
         this.props = props
-        this.s3 = new AWS.S3();
+        this.s3 = new S3();
         this.bucketName = props.bucketName
     }
 
@@ -26,6 +32,15 @@ export class TodoService {
             Key: uuidv4() + params.data.filename,
             Body: params.data.content.data
         }).promise()
+    }
+
+    async getPresignedUrl(params: FileServiceProps): Promise<string> {
+        const url = this.s3.getSignedUrl('putObject', {
+            Bucket: params.bucketName,
+            Key: params.fileName,
+            Expires: params.expireSeconds
+        })
+        return url;
     }
 
 }
