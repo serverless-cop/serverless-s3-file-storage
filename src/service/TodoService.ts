@@ -38,7 +38,8 @@ export class TodoService {
         const url = this.s3.getSignedUrl('putObject', {
             Bucket: params.bucketName,
             Key: params.fileName,
-            Expires: params.expireSeconds
+            Expires: params.expireSeconds,
+            ContentType: params.contentType
         })
         return url;
     }
